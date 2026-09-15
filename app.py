@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import fitz
 
 st.set_page_config(
