@@ -1,5 +1,6 @@
-import streamlit as st
+ import streamlit as st
 import fitz
+from sentence_transformers import SentenceTransformer
 
 st.set_page_config(
     page_title="Research Paper RAG",
@@ -23,12 +24,19 @@ uploaded_file = st.file_uploader(
 )
 
 
+@st.cache_resource
+def load_embedding_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
+
+
 def create_chunks(text, chunk_size=1000, overlap=200):
+
     chunks = []
 
     start = 0
 
     while start < len(text):
+
         end = start + chunk_size
 
         chunk = text[start:end]
@@ -65,6 +73,23 @@ if uploaded_file is not None:
 
     st.write("Total characters:", len(full_text))
     st.write("Total chunks:", len(chunks))
+
+    # Load embedding model
+    with st.spinner("Creating embeddings..."):
+
+        model = load_embedding_model()
+
+        embeddings = model.encode(
+            chunks,
+            show_progress_bar=False
+        )
+
+    st.success("Embeddings created successfully!")
+
+    st.write(
+        "Embedding shape:",
+        embeddings.shape
+    )
 
     st.subheader("First Chunk")
 
