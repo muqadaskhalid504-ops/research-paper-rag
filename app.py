@@ -1,5 +1,7 @@
 import streamlit as st
 import fitz
+import faiss
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
 st.set_page_config(
@@ -86,9 +88,22 @@ if uploaded_file is not None:
 
     st.success("Embeddings created successfully!")
 
+    # Convert embeddings to NumPy array
+    embeddings = np.array(embeddings).astype("float32")
+
+    # Create FAISS index
+    dimension = embeddings.shape[1]
+
+    index = faiss.IndexFlatL2(dimension)
+
+    # Add embeddings to FAISS
+    index.add(embeddings)
+
+    st.success("FAISS vector database created successfully!")
+
     st.write(
-        "Embedding shape:",
-        embeddings.shape
+        "Number of vectors stored:",
+        index.ntotal
     )
 
     st.subheader("First Chunk")
