@@ -3,6 +3,7 @@ import fitz
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
+from groq import Groq
 
 st.set_page_config(
     page_title="Research Paper RAG",
@@ -99,11 +100,6 @@ if uploaded_file is not None:
 
     st.success("FAISS vector database created successfully!")
 
-    st.write(
-        "Number of vectors stored:",
-        index.ntotal
-    )
-
     st.divider()
 
     # Question section
@@ -132,19 +128,74 @@ if uploaded_file is not None:
             number_of_results
         )
 
-        st.subheader("🔎 Relevant Sections")
+        # Get relevant chunks
+        relevant_chunks = []
+
+        for index_number in indices[0]:
+
+            relevant_chunks.append(
+                chunks[index_number]
+            )
+
+        # Combine chunks
+        context = "\n\n".join(
+            relevant_chunks
+        )
+
+        # Groq client
+        client = Groq(
+            api_key=st.secrets["GROQ_API_KEY"]
+        )
+
+        # Prompt for the AI
+        prompt = f"""
+You are a research paper assistant.
+
+Answer the user's question using ONLY the
+information provided in the research paper context.
+
+If the answer is not available in the context,
+say:
+
+"This information is not available in the
+uploaded research paper."
+
+Do not make up information.
+
+Research Paper Context:
+{context}
+
+User Question:
+{question}
+"""
+
+        with st.spinner("Generating answer..."):
+
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.2
+            )
+
+        answer = response.choices[0].message.content
+
+        st.subheader("🤖 Answer")
+
+        st.write(answer)
+
+        st.subheader("📚 Sources")
 
         for i, index_number in enumerate(indices[0]):
 
             st.markdown(
-                f"### Relevant Chunk {i + 1}"
+                f"### Source {i + 1}"
             )
 
             st.write(
                 chunks[index_number]
-            )
-
-            st.write(
-                "Distance:",
-                float(distances[0][i])
             )
