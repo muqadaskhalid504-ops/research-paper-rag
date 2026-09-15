@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import fitz
 from sentence_transformers import SentenceTransformer
 
