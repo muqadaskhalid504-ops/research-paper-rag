@@ -86,17 +86,15 @@ if uploaded_file is not None:
             show_progress_bar=False
         )
 
-    st.success("Embeddings created successfully!")
-
-    # Convert embeddings to NumPy array
     embeddings = np.array(embeddings).astype("float32")
+
+    st.success("Embeddings created successfully!")
 
     # Create FAISS index
     dimension = embeddings.shape[1]
 
     index = faiss.IndexFlatL2(dimension)
 
-    # Add embeddings to FAISS
     index.add(embeddings)
 
     st.success("FAISS vector database created successfully!")
@@ -106,10 +104,47 @@ if uploaded_file is not None:
         index.ntotal
     )
 
-    st.subheader("First Chunk")
+    st.divider()
 
-    st.text_area(
-        "Chunk 1",
-        chunks[0] if chunks else "No text found.",
-        height=300
+    # Question section
+    st.header("💬 Ask a Question")
+
+    question = st.text_input(
+        "Enter your question about the research paper:"
     )
+
+    if question:
+
+        # Convert question into embedding
+        question_embedding = model.encode(
+            [question]
+        )
+
+        question_embedding = np.array(
+            question_embedding
+        ).astype("float32")
+
+        # Search FAISS
+        number_of_results = 3
+
+        distances, indices = index.search(
+            question_embedding,
+            number_of_results
+        )
+
+        st.subheader("🔎 Relevant Sections")
+
+        for i, index_number in enumerate(indices[0]):
+
+            st.markdown(
+                f"### Relevant Chunk {i + 1}"
+            )
+
+            st.write(
+                chunks[index_number]
+            )
+
+            st.write(
+                "Distance:",
+                float(distances[0][i])
+            )
