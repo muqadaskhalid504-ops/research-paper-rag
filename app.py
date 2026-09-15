@@ -1,4 +1,5 @@
-import streamlit as st
+ import streamlit as st
+import fitz
 
 st.set_page_config(
     page_title="Research Paper RAG",
@@ -22,5 +23,23 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
+
     st.success("Research paper uploaded successfully!")
-    st.write("File name:", uploaded_file.name)
+
+    # Open the uploaded PDF
+    pdf_document = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+
+    # Extract text from all pages
+    full_text = ""
+
+    for page in pdf_document:
+        text = page.get_text()
+        full_text += text + "\n"
+
+    st.subheader("Extracted Text")
+
+    st.text_area(
+        "Research Paper Content",
+        full_text,
+        height=400
+    )
